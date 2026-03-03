@@ -1,0 +1,1 @@
+"""LabNoteScan package."""
