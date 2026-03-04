@@ -17,6 +17,8 @@ It provides a storage-independent ingestion pipeline and OCR adapter workflow th
 - Normalized conversion contract:
   - `Document -> Pages -> OCR text -> Markdown note`
 - Obsidian-friendly Markdown output
+- Stable core API for wrappers:
+  - `convert(input_uri, output_dir, options)`
 - No network dependency in the conversion path
 
 ## OCR configuration
@@ -64,3 +66,21 @@ src/
   markdown/   # Obsidian-friendly markdown rendering
 tests/        # Unit/integration tests
 ```
+
+## Mobile wrapper contract
+
+Shared API surface for CLI/mobile wrappers:
+
+```python
+from src.core.api import ConversionOptions, convert
+
+outputs = convert(
+    input_uri="/path/to/input.pdf",
+    output_dir="/path/to/output",
+    options=ConversionOptions(ocr_language="eng", ocr_dpi=300, ocr_preprocessing="none"),
+)
+```
+
+See Android planning and flow docs:
+- `docs/android.md`
+- `docs/e2e-obsidian-flow.md`

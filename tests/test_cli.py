@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.cli.main import build_parser, _resolve_ocr_config
+from src.cli.main import build_parser, _resolve_options
 
 
 def test_cli_ocr_flags_override_defaults() -> None:
@@ -18,7 +18,7 @@ def test_cli_ocr_flags_override_defaults() -> None:
         "threshold",
     ])
 
-    cfg = _resolve_ocr_config(args)
-    assert cfg.language == "deu"
-    assert cfg.dpi == 450
-    assert cfg.preprocessing == "threshold"
+    cfg = _resolve_options(args)
+    assert cfg.ocr_language == "deu"
+    assert cfg.ocr_dpi == 450
+    assert cfg.ocr_preprocessing == "threshold"
