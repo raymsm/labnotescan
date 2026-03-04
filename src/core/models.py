@@ -21,6 +21,9 @@ class Document:
 class OCRPageText:
     page: Page
     text: str
+    confidence: float | None = None
+    metadata: dict[str, object] | None = None
+    error: str | None = None
 
 
 @dataclass(frozen=True)

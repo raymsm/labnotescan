@@ -37,3 +37,12 @@ def test_ingest_nested_zip(tmp_path: Path) -> None:
         assert all(doc.pages[0].index == 1 for doc in result.documents)
     finally:
         result.cleanup()
+
+
+def test_ingest_mixed_zip_fixture(mixed_zip_fixture: Path) -> None:
+    result = ingest_input(mixed_zip_fixture)
+    try:
+        names = sorted(doc.source.name for doc in result.documents)
+        assert names == ["scanned.pdf", "screenshot.png", "typed.pdf"]
+    finally:
+        result.cleanup()
