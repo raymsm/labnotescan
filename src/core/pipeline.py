@@ -25,11 +25,22 @@ class ConversionPipeline:
         try:
             output_dir.mkdir(parents=True, exist_ok=True)
             outputs: list[ConversionOutput] = []
+            used_note_filenames: set[str] = set()
             for document in ingest_result.documents:
                 ocr_document = self.ocr_adapter.extract(document)
-                markdown = self.markdown_renderer.render(ocr_document)
-                markdown_path = output_dir / f"{document.source.stem}.md"
+                if hasattr(self.markdown_renderer, "render_note"):
+                    rendered_note = self.markdown_renderer.render_note(
+                        ocr_document,
+                        output_dir=output_dir,
+                        used_filenames=used_note_filenames,
+                    )
+                    markdown = rendered_note.content
+                    markdown_path = output_dir / rendered_note.filename
+                else:
+                    markdown = self.markdown_renderer.render(ocr_document)
+                    markdown_path = output_dir / f"{document.source.stem}.md"
                 markdown_path.write_text(markdown, encoding="utf-8")
+                used_note_filenames.add(markdown_path.name)
                 outputs.append(ConversionOutput(source=document.source, markdown_path=markdown_path))
             return outputs
         finally:
