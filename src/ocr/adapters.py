@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 import tempfile
 from pathlib import Path
 
 from src.core.models import Document, OCRAdapter, OCRDocument, OCRPageText, Page
 from src.ocr.base import OCRConfig, OCRExtractor, OCRResult
+
+logger = logging.getLogger(__name__)
 
 
 class PlaceholderOCRAdapter(OCRAdapter):
@@ -31,6 +34,7 @@ class TesseractOCRAdapter(OCRAdapter):
         self.config = config
 
     def extract(self, document: Document) -> OCRDocument:
+        logger.info(f"Extracting text from {document.source}")
         if document.source.suffix.lower() == ".pdf":
             return self._extract_pdf(document)
 

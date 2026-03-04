@@ -5,82 +5,106 @@ It provides a storage-independent ingestion pipeline and OCR adapter workflow th
 
 ## Features
 
-- CLI command: `labnotescan convert <input> --out <dir>`
-- Supported inputs:
-  - Images: `.png`, `.jpg`, `.jpeg`, `.webp`
-  - PDF: `.pdf`
-  - ZIP archives containing images/PDFs (including nested ZIPs)
-- OCR pipeline with:
-  - Embedded PDF text extraction when present
-  - Rasterization + OCR fallback for scanned PDFs
-  - OCR language / DPI / preprocessing configuration
-- Normalized conversion contract:
-  - `Document -> Pages -> OCR text -> Markdown note`
-- Obsidian-friendly Markdown output
-- Stable core API for wrappers:
-  - `convert(input_uri, output_dir, options)`
-- No network dependency in the conversion path
+- **CLI-first**: Simple command-line interface for batch processing.
+- **Offline-only**: No network calls. All OCR and processing happen locally.
+- **Recursive Ingestion**: Automatically extracts and processes images and PDFs from ZIP archives.
+- **Smart PDF Handling**:
+  - Extracts embedded text from searchable PDFs.
+  - Automatically rasterizes and performs OCR on scanned PDFs.
+- **Obsidian Ready**: Generates Markdown with YAML frontmatter, tags, and attachment linking.
+- **Cross-Platform Core**: Python logic designed to be wrapped by mobile (Android/iOS) or desktop interfaces.
 
-## OCR configuration
+## Requirements
 
-Set OCR options via CLI flags:
+- **Python**: 3.10 or higher.
+- **Tesseract OCR**: Must be installed on your system.
+  - **Windows**: Install via [UB-Mannheim/tesseract](https://github.com/UB-Mannheim/tesseract/wiki).
+  - **macOS**: `brew install tesseract`
+  - **Linux**: `sudo apt install tesseract-ocr`
 
+## Installation
+
+### 1. Clone the repository
 ```bash
-labnotescan convert ./samples/scan.pdf --out ./notes \
-  --ocr-language eng \
-  --ocr-dpi 300 \
-  --ocr-preprocessing grayscale
+git clone https://github.com/your-repo/labnotescan.git
+cd labnotescan
 ```
 
-Or pass a YAML file:
+### 2. Install dependencies
+It is recommended to use a virtual environment:
 
+```bash
+python -m venv venv
+# On Windows:
+.\venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+pip install -e .
+```
+
+## Usage
+
+### Basic conversion
+Convert a single file or a ZIP archive to a target directory:
+
+```bash
+labnotescan convert ./my-notes.pdf --out ./obsidian-vault/notes
+```
+
+### Advanced OCR configuration
+You can tune the OCR engine via flags or a config file:
+
+```bash
+labnotescan convert ./scan.jpg --out ./notes \
+  --ocr-language eng+fra \
+  --ocr-dpi 400 \
+  --ocr-preprocessing threshold \
+  --verbose
+```
+
+### Using a configuration file
+Create a `config.yaml`:
 ```yaml
 ocr_language: eng
 ocr_dpi: 300
-ocr_preprocessing: threshold
+ocr_preprocessing: grayscale
 ```
+
+Run with:
+```bash
+labnotescan convert ./bundle.zip --out ./notes --config ./config.yaml
+```
+
+## Technical Architecture
+
+The project is split into several modular components:
+- `src.ingest`: Recursive file detection and ZIP extraction.
+- `src.ocr`: Abstractions for OCR engines (Tesseract implementation included).
+- `src.markdown`: Obsidian-specific rendering logic.
+- `src.core`: Orchestration pipeline and stable API surface.
+
+## Development
+
+### Running tests
+Tests use `pytest` and mock the OCR engine to ensure they can run in any environment:
 
 ```bash
-labnotescan convert ./samples/scan.pdf --out ./notes --config ./config.yaml
+pytest
 ```
 
-## Offline guarantee
-
-LabNoteScan performs **no network calls** during ingestion, conversion, OCR adapter execution, or Markdown generation.
-All processing runs locally in temporary and output directories.
-
-## Installation (editable)
-
-```bash
-python -m pip install -e .
-```
-
-## Project structure
-
+### Project Structure
 ```text
+android/      # Minimal Android app skeleton (WorkManager + SAF)
+docs/         # Architecture and flow documentation
 src/
-  cli/        # CLI entrypoint
-  core/       # Storage-independent pipeline contracts + orchestrator
+  cli/        # CLI entrypoint and argument parsing
+  core/       # Stable API and conversion orchestrator
   ingest/     # Input detection and recursive ZIP ingestion
-  ocr/        # OCR abstraction and offline implementations
   markdown/   # Obsidian-friendly markdown rendering
-tests/        # Unit/integration tests
+  ocr/        # OCR abstraction and Tesseract implementation
+tests/        # Comprehensive test suite
 ```
 
-## Mobile wrapper contract
-
-Shared API surface for CLI/mobile wrappers:
-
-```python
-from src.core.api import ConversionOptions, convert
-
-outputs = convert(
-    input_uri="/path/to/input.pdf",
-    output_dir="/path/to/output",
-    options=ConversionOptions(ocr_language="eng", ocr_dpi=300, ocr_preprocessing="none"),
-)
-```
-
-See Android planning and flow docs:
-- `docs/android.md`
-- `docs/e2e-obsidian-flow.md`
+## License
+Distributed under the MIT License. See `LICENSE` for more information.

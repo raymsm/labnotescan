@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import logging
+import sys
 from pathlib import Path
 
 from src.core.api import ConversionOptions, convert
@@ -8,6 +10,7 @@ from src.core.api import ConversionOptions, convert
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="labnotescan", description="Offline OCR to Markdown converter")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     convert_parser = subparsers.add_parser("convert", help="Convert supported files to markdown")
@@ -55,6 +58,13 @@ def _resolve_options(args: argparse.Namespace) -> ConversionOptions:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        stream=sys.stderr,
+    )
 
     if args.command == "convert":
         options = _resolve_options(args)
