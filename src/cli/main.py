@@ -3,10 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from src.core.pipeline import ConversionPipeline
-from src.markdown.renderer import ObsidianMarkdownRenderer
-from src.ocr.adapters import TesseractImageExtractor, TesseractOCRAdapter
-from src.ocr.base import OCRConfig
+from src.core.api import ConversionOptions, convert
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -43,12 +40,16 @@ def _load_config(config_path: Path | None) -> dict[str, object]:
     return data
 
 
-def _resolve_ocr_config(args: argparse.Namespace) -> OCRConfig:
+def _resolve_options(args: argparse.Namespace) -> ConversionOptions:
     file_cfg = _load_config(args.config)
     language = args.ocr_language or file_cfg.get("ocr_language") or "eng"
     dpi = args.ocr_dpi or file_cfg.get("ocr_dpi") or 300
     preprocessing = args.ocr_preprocessing or file_cfg.get("ocr_preprocessing") or "none"
-    return OCRConfig(language=str(language), dpi=int(dpi), preprocessing=str(preprocessing))
+    return ConversionOptions(
+        ocr_language=str(language),
+        ocr_dpi=int(dpi),
+        ocr_preprocessing=str(preprocessing),
+    )
 
 
 def main() -> int:
@@ -56,13 +57,8 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.command == "convert":
-        ocr_config = _resolve_ocr_config(args)
-        extractor = TesseractImageExtractor(config=ocr_config)
-        pipeline = ConversionPipeline(
-            ocr_adapter=TesseractOCRAdapter(extractor=extractor, config=ocr_config),
-            markdown_renderer=ObsidianMarkdownRenderer(),
-        )
-        outputs = pipeline.convert(args.input, args.out)
+        options = _resolve_options(args)
+        outputs = convert(args.input, args.out, options=options)
         print(f"Converted {len(outputs)} document(s) into {args.out}")
         for output in outputs:
             print(f"- {output.source.name} -> {output.markdown_path.name}")
